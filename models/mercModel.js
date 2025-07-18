@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 const { type } = require("os");
 const mercSchema = new mongoose.Schema({
-    title: {
+    firstName: {
         type: String,
         required: true,
     },
-    category: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'Category',
+    lastName: {
+        type: String,
         required: true,
     },
     description: {

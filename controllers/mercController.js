@@ -108,7 +108,7 @@ exports.updateMerc = async (req, res) => {
     }
 };
 
-exports.deletePost = async (req, res) => {
+exports.deleteMerc = async (req, res) => {
     try {
         await Post.findByIdAndDelete(req.params.id);
         res.status(200).json({
