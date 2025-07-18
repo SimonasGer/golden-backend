@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { type } = require("os");
-const postSchema = new mongoose.Schema({
+const mercSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true,
@@ -41,5 +41,5 @@ const postSchema = new mongoose.Schema({
 })
 
 
-const Post = mongoose.model("Post", postSchema);
-module.exports = Post;
+const Merc = mongoose.model("Merc", mercSchema);
+module.exports = Merc;

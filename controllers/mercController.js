@@ -1,7 +1,7 @@
-const Post = require("../models/postModel");
+const Merc = require("../models/mercModel");
 const User = require("../models/userModel");
 // ROUTE FUNCTIONS
-exports.getAllPosts = async (req, res) => {
+exports.getAllMercs = async (req, res) => {
     try {
     // Filtering:
         const queryObject = { ...req.query };
@@ -16,7 +16,7 @@ exports.getAllPosts = async (req, res) => {
         );
         // console.log(JSON.parse(queryString));
 
-        let query = Post.find(JSON.parse(queryString));
+        let query = Merc.find(JSON.parse(queryString));
 
         // Sorting:
     if (req.query.sort){
@@ -33,12 +33,12 @@ exports.getAllPosts = async (req, res) => {
     }
 
     // Execute query
-    const posts = await query;
+    const mercs = await query;
     res.status(200).json({
         status: "success",
-        results: posts.length,
+        results: mercs.length,
         data: {
-            posts,
+            mercs,
         },
     });
     } catch (err) {
@@ -46,19 +46,19 @@ exports.getAllPosts = async (req, res) => {
     }
 };
 
-exports.createPost = async (req, res) => {
+exports.createMerc = async (req, res) => {
     try {
-        const newPost = await Post.create(req.body);
+        const newMerc = await Merc.create(req.body);
 
         const creator = await User.findById(req.body.creator);
 
-        creator.posts.push(newPost._id);
+        creator.mercs.push(newMerc._id);
         await creator.save();
         
         res.status(201).json({
             status: "success",
             data: {
-                post: newPost,
+                post: newMerc,
             },
         });
     } catch (err) {
@@ -66,10 +66,10 @@ exports.createPost = async (req, res) => {
     }
 };
 
-exports.getPostById = async (req, res) => {
+exports.getMercById = async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id).populate("likes").populate("creator").populate("category"); // populate, kad sudeti users is duomenu bazes
-        if (!post) {
+        const merc = await Merc.findById(req.params.id)
+        if (!merc) {
             res.status(404).json({
                 status: "failed",
                 message: "invalid id",
@@ -78,7 +78,7 @@ exports.getPostById = async (req, res) => {
             res.status(200).json({
                 status: "success",
                 data: {
-                    post,
+                    merc,
                 },
             });
         }
@@ -88,57 +88,16 @@ exports.getPostById = async (req, res) => {
 };
 
 // kitam kartui
-exports.updatePost = async (req, res) => {
+exports.updateMerc = async (req, res) => {
     try{
-        const post = await Post.findByIdAndUpdate(req.params.id, req.body, {
+        const merc = await Merc.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true,
         });
-        post.likes.push(req.body.likes)
         res.status(200).json({
             status: "success",
             data: {
-                post,
-            },
-        });
-    } catch (err) {
-        res.status(404).json({
-            status: "failed",
-            message: err.message,
-        });
-    }
-};
-
-exports.updateLikes = async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id);
-        if (!post) {
-            return res.status(404).json({
-                status: "failed",
-                message: "Dish not found",
-            });
-        }
-        const user = await User.findById(req.body.likes);
-        const existingLikeIndex = post.likes.indexOf(req.body.likes);
-        const existingUserIndex = user.likes.indexOf(req.params.id);
-
-        if (existingLikeIndex === -1) {
-            // Item does not exist, so add it
-            post.likes.push(req.body.likes);
-            user.likes.push(req.params.id)
-        } else {
-            // Item exists, so remove it
-            post.likes.splice(existingLikeIndex, 1);
-            user.likes.splice(existingUserIndex, 1);
-        }
-
-        await post.save();
-        await user.save();
-
-        res.status(200).json({
-            status: "success",
-            data: {
-                post,
+                merc,
             },
         });
     } catch (err) {
