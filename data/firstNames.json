@@ -1,0 +1,26 @@
+{
+  "male": [
+    "Adomas", "Algimantas", "Andrius", "Antanas", "Arūnas",
+    "Balys", "Dainius", "Darius", "Dominykas", "Edgaras",
+    "Egidijus", "Eimantas", "Giedrius", "Gintaras", "Ignas",
+    "Irmantas", "Jokūbas", "Jonas", "Juozapas", "Justas",
+    "Karolis", "Kęstutis", "Laurynas", "Liutauras", "Lukas",
+    "Mantas", "Mindaugas", "Modestas", "Nerijus", "Nojus",
+    "Paulius", "Petras", "Raimundas", "Ramūnas", "Rimantas",
+    "Rokas", "Saulius", "Sigitas", "Simonas", "Stasys",
+    "Tadas", "Tautvydas", "Tomas", "Valdas", "Valentinas",
+    "Vilius", "Vincas", "Vygantas", "Vytautas", "Žygimantas"
+  ],
+  "female": [
+    "Agnė", "Aistė", "Aldona", "Alina", "Aušra",
+    "Birutė", "Dalia", "Danguolė", "Deimantė", "Diana",
+    "Eglė", "Edita", "Elena", "Ema", "Giedrė",
+    "Gintarė", "Greta", "Ieva", "Ilona", "Ingrida",
+    "Jolanta", "Joana", "Justina", "Karina", "Kristina",
+    "Lina", "Livija", "Loreta", "Milda", "Monika",
+    "Neringa", "Nida", "Odeta", "Ona", "Raminta",
+    "Reda", "Renata", "Rūta", "Salomėja", "Sandra",
+    "Simona", "Skaistė", "Snieguolė", "Sonata", "Tatjana",
+    "Toma", "Vaida", "Viktorija", "Vilija", "Živilė"
+  ]
+}

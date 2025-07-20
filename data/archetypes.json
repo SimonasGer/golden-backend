@@ -1,0 +1,76 @@
+{
+  "archetypes": [
+    {
+      "name": "Brute",
+      "description": "Hits hard, thinks rarely. Built for raw force and frontline chaos.",
+      "statRanges": {
+        "strength": [7, 10],
+        "agility": [2, 5],
+        "intelligence": [1, 4]
+      }
+    },
+    {
+      "name": "Scout",
+      "description": "Fast, light, and observant. Prefers speed and subtlety over brute strength.",
+      "statRanges": {
+        "strength": [3, 6],
+        "agility": [7, 10],
+        "intelligence": [4, 7]
+      }
+    },
+    {
+      "name": "Tactician",
+      "description": "A master of plans and manipulation. Physically weak, mentally sharp.",
+      "statRanges": {
+        "strength": [2, 4],
+        "agility": [4, 6],
+        "intelligence": [8, 10]
+      }
+    },
+    {
+      "name": "Brawler",
+      "description": "Scrappy and aggressive. Unrefined but effective in close combat.",
+      "statRanges": {
+        "strength": [6, 9],
+        "agility": [5, 8],
+        "intelligence": [2, 4]
+      }
+    },
+    {
+      "name": "Assassin",
+      "description": "Precise, cold, and efficient. Prefers clean kills and silent exits.",
+      "statRanges": {
+        "strength": [4, 6],
+        "agility": [8, 10],
+        "intelligence": [5, 8]
+      }
+    },
+    {
+      "name": "Mystic",
+      "description": "Frailer than most, but frighteningly intelligent. Sees what others don’t.",
+      "statRanges": {
+        "strength": [1, 3],
+        "agility": [3, 5],
+        "intelligence": [9, 10]
+      }
+    },
+    {
+      "name": "Wildcard",
+      "description": "No one knows what you're getting. Could be a genius, a moron, or both.",
+      "statRanges": {
+        "strength": [1, 10],
+        "agility": [1, 10],
+        "intelligence": [1, 10]
+      }
+    },
+    {
+      "name": "Survivor",
+      "description": "Balanced and adaptable. Never the best, never the worst — always alive.",
+      "statRanges": {
+        "strength": [4, 7],
+        "agility": [4, 7],
+        "intelligence": [4, 7]
+      }
+    }
+  ]
+}

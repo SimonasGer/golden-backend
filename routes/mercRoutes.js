@@ -3,20 +3,19 @@ const router = express.Router();
 const mercController = require("../controllers/mercController");
 const authController = require("../controllers/authController");
 
-//router.use(authController.protect); // padaro, kad visi routes butu apsaugoti nuo neprisijungusiu vartotoju
+router.use(authController.protect)
 router
     .route("/")
-    .get(mercController.getAllMercs)
-    .post(mercController.createMerc);
+    .get(authController.restrictTo("user", "admin"), mercController.getHiredMercs)
+    .post(authController.restrictTo("user", "admin"), mercController.createMerc)
+
+router
+    .route("/hire")
+    .post(authController.restrictTo("user", "admin"), mercController.hireMerc)
 
 router
     .route("/:id")
-    .get(authController.restrictTo("user", "admin"), mercController.getMercById)
-    .delete(authController.restrictTo("user", "admin"), mercController.deleteMerc)
-
-router
-    .route("/update/:id")
-    .post(authController.restrictTo("admin", "user"), mercController.updateMerc)
+    .delete(authController.restrictTo("user", "admin"), mercController.fireMerc)
 
 
 module.exports = router;

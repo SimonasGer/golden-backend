@@ -9,6 +9,10 @@ const mercSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    archetype: {
+        type: String,
+        required: true,
+    },
     description: {
         type: String,
         required: true,
@@ -24,7 +28,7 @@ const mercSchema = new mongoose.Schema({
     stats: {
         strength: { type: Number, default: 5 },
         agility: { type: Number, default: 5 },
-        intellect: { type: Number, default: 5 },
+        intelligence: { type: Number, default: 5 },
     },
     injuryStatus: {
         type: String,
