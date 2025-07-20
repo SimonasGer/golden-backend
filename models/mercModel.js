@@ -17,26 +17,28 @@ const mercSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    image: {
+    wage: {
+        type: Number,
+        required: true,
+    },
+    stats: {
+        strength: { type: Number, default: 5 },
+        agility: { type: Number, default: 5 },
+        intellect: { type: Number, default: 5 },
+    },
+    injuryStatus: {
         type: String,
-        required: true,
+        enum: ['healthy', 'injured', 'dead'],
+        default: 'healthy'
     },
-    likes: 
-    [
-        { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-    ],
-    comments: {
-        type: Array,
-        comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
-    },
-    creator: {
+    boss: {
         type: mongoose.Schema.Types.ObjectId, ref: 'User',
-        required: true,
+        required: false,
+        default: null,
     },
-    created_at: {
+    createdAt: {
         type: Date,
-        default: Date.now(),
-        select: false,
+        default: Date.now
     },
 })
 

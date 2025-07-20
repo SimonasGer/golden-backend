@@ -3,11 +3,11 @@ const router = express.Router();
 const mercController = require("../controllers/mercController");
 const authController = require("../controllers/authController");
 
-router.use(authController.protect); // padaro, kad visi routes butu apsaugoti nuo neprisijungusiu vartotoju
+//router.use(authController.protect); // padaro, kad visi routes butu apsaugoti nuo neprisijungusiu vartotoju
 router
     .route("/")
-    .get(authController.restrictTo("user", "admin"), mercController.getAllMercs)
-    .post(authController.restrictTo("admin", "user"), mercController.createMerc);
+    .get(mercController.getAllMercs)
+    .post(mercController.createMerc);
 
 router
     .route("/:id")

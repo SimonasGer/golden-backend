@@ -5,6 +5,11 @@ exports.getAllMercs = async (req, res) => {
     try {
     // Filtering:
         const queryObject = { ...req.query };
+        Object.keys(queryObject).forEach((key) => {
+        if (queryObject[key] === "null") {
+            queryObject[key] = null;
+        }
+        });
         const excludedFields = ["sort", "limit", "fields"];
         excludedFields.forEach((element) => delete queryObject[element]);
 
@@ -48,12 +53,7 @@ exports.getAllMercs = async (req, res) => {
 
 exports.createMerc = async (req, res) => {
     try {
-        const newMerc = await Merc.create(req.body);
-
-        const creator = await User.findById(req.body.creator);
-
-        creator.mercs.push(newMerc._id);
-        await creator.save();
+        const newMerc = await Merc.create(req.body)
         
         res.status(201).json({
             status: "success",
