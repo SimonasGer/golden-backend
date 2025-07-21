@@ -62,10 +62,10 @@ exports.hireMerc = async (req, res) => {
         });
 
         res.status(201).json({
-        status: "success",
-        data: {
-            merc: savedMerc
-        }
+            status: "success",
+            data: {
+                merc: savedMerc
+            }
         });
     } catch (err) {
         console.error("Error hiring merc:", err);
