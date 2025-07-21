@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Silence in the Sewers",
+    "description": "A wealthy merchant wants the mysterious noises beneath his estate dealt with. Preferably quietly.",
+    "requirements": {
+      "strength": [10, 20],
+      "agility": [5, 15],
+      "intelligence": [0, 10]
+    }
+  },
+  {
+    "name": "Desert Courier",
+    "description": "A sealed letter must reach the next city across 80 km of sun-bleached dunes. Bandits are optional. Time is not.",
+    "requirements": {
+      "strength": [5, 10],
+      "agility": [15, 25],
+      "intelligence": [5, 15]
+    }
+  },
+  {
+    "name": "Haunted Hamlet",
+    "description": "Something's spooking a whole village. Exorcism or arson—your call.",
+    "requirements": {
+      "strength": [10, 20],
+      "agility": [5, 15],
+      "intelligence": [15, 25]
+    }
+  },
+  {
+    "name": "Tower of Trouble",
+    "description": "A deranged wizard has barricaded himself atop a spire. The client wants him dead—or at least shut up.",
+    "requirements": {
+      "strength": [15, 30],
+      "agility": [10, 20],
+      "intelligence": [10, 20]
+    }
+  },
+  {
+    "name": "Escort the Idiot",
+    "description": "Noble heir needs to reach the border. He's loud, arrogant, and allergic to horses. Good luck.",
+    "requirements": {
+      "strength": [10, 15],
+      "agility": [10, 20],
+      "intelligence": [10, 20]
+    }
+  },
+  {
+    "name": "Mine Collapse",
+    "description": "A support beam cracked in the iron mine. Rescue trapped workers before the rest comes down.",
+    "requirements": {
+      "strength": [20, 30],
+      "agility": [5, 10],
+      "intelligence": [5, 15]
+    }
+  },
+  {
+    "name": "Swamp Thing",
+    "description": "A creature has taken residence in the local bog. It’s hungry. The villagers aren’t thrilled.",
+    "requirements": {
+      "strength": [15, 25],
+      "agility": [10, 20],
+      "intelligence": [0, 10]
+    }
+  },
+  {
+    "name": "Prison Break-In",
+    "description": "A corrupt judge wants a specific prisoner retrieved. Don't ask why. In and out. Quietly.",
+    "requirements": {
+      "strength": [5, 15],
+      "agility": [15, 25],
+      "intelligence": [10, 20]
+    }
+  },
+  {
+    "name": "The Stolen Goat",
+    "description": "A farmer swears his prize goat was kidnapped by cultists. Return it, or at least bring closure.",
+    "requirements": {
+      "strength": [5, 10],
+      "agility": [5, 15],
+      "intelligence": [5, 15]
+    }
+  },
+  {
+    "name": "Shipyard Sabotage",
+    "description": "A rival guild needs someone to make sure a ship never sets sail. Subtlety preferred, fire optional.",
+    "requirements": {
+      "strength": [10, 20],
+      "agility": [15, 25],
+      "intelligence": [10, 20]
+    }
+  }
+]

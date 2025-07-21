@@ -78,7 +78,7 @@ exports.login = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).populate("posts").populate("comments").populate("likes"); // populate, kad sudeti users is duomenu bazes
+        const user = await User.findById(req.user.id)
         if (!user) {
             res.status(404).json({
                 status: "failed",

@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema({
             message: "Passwords do not match",
         },
     },
+    gold: {
+        type: Number,
+        default: 5000,
+        min: 0,
+    },
     role: {
         type: String,
         enum: ["user", "admin"],

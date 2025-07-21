@@ -22,7 +22,6 @@ exports.getHiredMercs = async (req, res) => {
 exports.createMerc = async (req, res) => {
     try {
         const count = parseInt(req.query.count) || 1;
-
         const generatedMercs = generateMultipleMercs(count);
 
         res.status(201).json({
@@ -45,6 +44,16 @@ exports.hireMerc = async (req, res) => {
         if (!merc) {
         return res.status(400).json({ message: "Missing merc data" });
         }
+
+        const user = await User.findById(req.user.id);
+        const mercPrice = merc.price || 100;
+
+        if (user.gold < mercPrice) {
+        return res.status(400).json({ message: "Not enough gold" });
+        }
+
+        user.gold -= mercPrice;
+        await user.save();
 
         const savedMerc = await Merc.create({
         ...merc,
