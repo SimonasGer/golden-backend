@@ -51,7 +51,7 @@ exports.acceptMission = async (req, res) => {
 exports.getAllMissions = async (req, res) => {
     try {
         const userId = req.user.id; // 🔒 from JWT
-        const missions = await Mission.find({ taker: userId });
+        const missions = await Mission.find({ taker: userId, status: "pending" });
 
         res.status(200).json({
             status: "success",
@@ -68,14 +68,18 @@ exports.getAllMissions = async (req, res) => {
 exports.getMissionById = async (req, res) => {
     try {
         const missionId = req.params.id;
+        const userId = req.user.id; // 🔒 from JWT
+        const user = await User.findById(userId);
         const mission = await Mission.findById(missionId);
-        if (!mission) {
+
+        if (!mission || mission.status !== "pending" || mission.taker.toString() !== userId) {
             return res.status(404).json({ message: "Mission not found" });
         }
         res.status(200).json({
             status: "success",
             data: {
-                mission
+                mission,
+                gold: user.gold
             }
         });
     } catch (err) {
@@ -117,7 +121,7 @@ exports.updateMissionStatus = async (req, res) => {
         await mission.save();
 
         // Give player gold if successful
-        if (result.status === "success") {
+        if (result.status === "completed") {
             const user = await User.findById(userId);
             user.gold = user.gold + result.reward - result.wage;
             await user.save();

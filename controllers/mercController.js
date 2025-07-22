@@ -22,12 +22,16 @@ exports.getHiredMercs = async (req, res) => {
 exports.createMerc = async (req, res) => {
     try {
         const count = parseInt(req.query.count) || 1;
+        const userId = req.user.id; // comes from JWT
+        const user = await User.findById(userId);
+        const gold = user.gold;
         const generatedMercs = generateMultipleMercs(count);
 
         res.status(201).json({
         status: "success",
         data: {
-            mercs: generatedMercs
+            mercs: generatedMercs,
+            gold: gold,
         },
         });
     } catch (err) {
@@ -49,7 +53,9 @@ exports.hireMerc = async (req, res) => {
         const mercPrice = merc.price || 100;
 
         if (user.gold < mercPrice) {
-        return res.status(400).json({ message: "Not enough gold" });
+            return res.status(201).json(
+                { message: "Not enough gold to hire this merc" }
+            );
         }
 
         user.gold -= mercPrice;
