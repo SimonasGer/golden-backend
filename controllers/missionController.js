@@ -119,7 +119,7 @@ exports.updateMissionStatus = async (req, res) => {
         // Give player gold if successful
         if (result.status === "success") {
             const user = await User.findById(userId);
-            user.gold += result.reward;
+            user.gold = user.gold + result.reward - result.wage;
             await user.save();
         }
 

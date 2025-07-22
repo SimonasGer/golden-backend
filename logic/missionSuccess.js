@@ -23,17 +23,20 @@ function mercFate(mercs, status) {
 }
 
 function missionSuccess(mission, mercs) {
-    const givenStats = {
+    let givenStats = {
         strength: 0,
         agility: 0,
         intelligence: 0,
     };
+
+    let wage = 0;
 
     // Sum merc stats
     mercs.forEach(merc => {
         givenStats.strength += merc.stats.strength;
         givenStats.agility += merc.stats.agility;
         givenStats.intelligence += merc.stats.intelligence;
+        wage += merc.wage;
     });
 
     const requiredStats = mission.stats;
@@ -58,7 +61,8 @@ function missionSuccess(mission, mercs) {
     return {
         status: success ? "completed" : "failed",
         reward: success ? mission.reward : 0,
-        mercs: mercFate(mercs, success ? "completed" : "failed")
+        mercs: mercFate(mercs, success ? "completed" : "failed"),
+        wage: wage,
     };
 }
 
