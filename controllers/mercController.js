@@ -5,12 +5,14 @@ const { generateMultipleMercs } = require("../logic/generateMerc");
 exports.getHiredMercs = async (req, res) => {
     try {
         const bossId = req.user.id; // comes from JWT
+        const user = await User.findById(bossId);
         const mercs = await Merc.find({ boss: bossId });
 
         res.status(200).json({
             status: "success",
             data: {
                 mercs,
+                gold: user.gold,
             },
         });
     } catch (err) {
@@ -78,6 +80,37 @@ exports.hireMerc = async (req, res) => {
         res.status(500).json({ message: "Failed to hire merc" });
     }
 };
+
+exports.healMerc = async (req, res) => {
+    try {
+        const userId = req.user.id; // 🔒 from JWT
+        const user = await User.findById(userId);
+        const mercId = req.params.id;
+        const merc = await Merc.findById(mercId);
+        if (!merc) {
+            return res.status(404).json({ message: "Merc not found" });
+        }
+        if (merc.injuryStatus !== "injured") {
+            return res.status(400).json({ message: "Merc is not injured" });
+        }
+        if (user.gold < 100) {
+            return res.status(400).json({ message: "Not enough gold to heal merc" });
+        }
+        merc.injuryStatus = "healthy";
+        user.gold -= 100; // Deduct healing cost
+        await user.save();
+        await merc.save();
+        res.status(200).json({
+            status: "success",
+            data: {
+                merc
+            }
+        });
+    } catch (err) {
+        console.error("Error healing merc:", err);
+        res.status(500).json({ message: "Failed to heal merc" });
+    }
+}
 
 exports.fireMerc = async (req, res) => {
     try {

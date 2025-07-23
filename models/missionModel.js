@@ -28,6 +28,12 @@ const missionSchema = new mongoose.Schema({
         required: false,
         default: null,
     },
+    mercs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Merc',
+        required: false,
+        default: [],
+    }],
     createdAt: {
         type: Date,
         default: Date.now

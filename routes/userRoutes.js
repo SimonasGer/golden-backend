@@ -16,5 +16,9 @@ router
     .get(authController.restrictTo("user", "admin"), authController.getUserById)
     .patch(authController.restrictTo("user", "admin"), authController.updateUser)
     .delete(authController.restrictTo("admin"), authController.deleteUser)
+router
+    .use(authController.protect)
+    .route("/reset")
+    .post(authController.restrictTo("user", "admin"), authController.resetSave);
     
 module.exports = router;

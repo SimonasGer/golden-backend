@@ -15,6 +15,7 @@ router
 
 router
     .route("/:id")
+    .patch(authController.restrictTo("user", "admin"), mercController.healMerc)
     .delete(authController.restrictTo("user", "admin"), mercController.fireMerc)
 
 

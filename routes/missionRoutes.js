@@ -12,6 +12,9 @@ router
     .route("/accepted")
     .get(authController.restrictTo("user", "admin"), missionController.getAllMissions)
 router
+    .route("/log")
+    .get(authController.restrictTo("user", "admin"), missionController.getAllMissionsByUser)
+router
     .route("/:id")
     .get(authController.restrictTo("user", "admin"), missionController.getMissionById)
     .patch(authController.restrictTo("user", "admin"), missionController.updateMissionStatus)

@@ -1,4 +1,6 @@
 const User = require("../models/userModel");
+const Mission = require("../models/missionModel");
+const Merc = require("../models/mercModel");
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
 
@@ -96,6 +98,25 @@ exports.getUserById = async (req, res) => {
         console.log(err);
     }
 };
+
+exports.resetSave = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        await Merc.deleteMany({ boss: userId });
+        await Mission.deleteMany({ taker: userId });
+        await User.findByIdAndUpdate(userId, { gold: 2000 });
+
+        res.status(200).json({
+        status: "success",
+        message: "Game reset successfully."
+        });
+    } catch (err) {
+        console.error("Reset error:", err);
+        res.status(500).json({ status: "fail", message: "Failed to reset game." });
+    }
+};
+
 
 exports.updateUser = async (req, res) => {
     try{

@@ -117,6 +117,7 @@ exports.updateMissionStatus = async (req, res) => {
 
         // Update mission status and reward
         mission.status = result.status;
+        mission.mercs = mercIds
         mission.reward = result.reward;
         await mission.save();
 
@@ -142,6 +143,22 @@ exports.updateMissionStatus = async (req, res) => {
     } catch (err) {
         console.error("Error updating mission status:", err);
         res.status(500).json({ message: "Failed to update mission status" });
+    }
+};
+
+exports.getAllMissionsByUser = async (req, res) => {
+    try {
+        const userId = req.user.id; // 🔒 from JWT
+        const missions = await Mission.find({ taker: userId, status: "completed" || "failed" }).populate({ path: 'mercs', options: { retainNullValues: true } }).sort({ createdAt: -1 });
+        res.status(200).json({
+            status: "success",
+            data: {
+                missions
+            }
+        });
+    } catch (err) {
+        console.error("Error getting all missions by user:", err);
+        res.status(500).json({ message: "Failed to get missions" });
     }
 };
 
