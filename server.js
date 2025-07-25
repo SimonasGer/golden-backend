@@ -1,24 +1,20 @@
-const app = require("./app");
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-dotenv.config({path: "./config.env"});
-const port = process.env.PORT;
-const DB = process.env.DATABASE.replace(
-  '<db_password>',
-  encodeURIComponent(process.env.DATABASE_PASSWORD)
-)
+dotenv.config({ path: "./config.env" });
+const app = require("./app");
+const pool = require("./db");
+const port = process.env.PORT || 8080;
 
-mongoose
-    .connect(DB)
-    .then((con) => {
-        console.log("Connected");
+// Test the connection
+pool.connect()
+    .then(client => {
+        console.log("Connected to PostgreSQL (Neon)");
+        client.release(); // release the client back to the pool
     })
-    .catch((err) => {
-        console.log(err);
-    });
-
-app.listen(port, () => {
-    console.log("Express started; see http://localhost:8080/");
+    .catch(err => {
+        console.error("PostgreSQL connection error:", err.stack);
 });
 
-
+// Start the server
+app.listen(port, () => {
+    console.log(`Express started; see http://localhost:${port}/`);
+});

@@ -1,8 +1,8 @@
-const User = require("../models/userModel");
-const Mission = require("../models/missionModel");
-const Merc = require("../models/mercModel");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const { promisify } = require("util");
+const pool = require("../db");
+
 
 const signToken = (id) => {
     return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -12,31 +12,40 @@ const signToken = (id) => {
 
 exports.getAllUsers = async (req, res) => {
     try {
-        const users = await User.find();
-        res.status(200).json({
-            status: "success",
-            results: users.length,
-            data: {
-                users,
-            },
-        });
+        //later
     } catch (err) {
         console.log(err);
     }
 };
 
 exports.register = async (req, res) => {
+    const { username, email, role, password, confirmPassword } = req.body;
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({
+            status: "failed",
+            message: "Passwords do not match",
+        });
+    }
     try {
-        const newUser = await User.create({
-            username: req.body.username,
-            email: req.body.email,
-            role: req.body.role,
-            password: req.body.password,
-            confirmPassword: req.body.confirmPassword,
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        // Insert the user into the DB
+        const result = await pool.query(
+            `INSERT INTO users (username, email, role, password, gold)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id, username, email, role`,
+            [username, email, role || 'user', hashedPassword, 2000]
+        );
+
+        const newUser = result.rows[0];
+
+        // Create JWT
+        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRES_IN,
         });
-        const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN,
-        });
+
         res.status(201).json({
             status: "success",
             data: newUser,
@@ -46,54 +55,58 @@ exports.register = async (req, res) => {
         res.status(400).json({
             status: "failed",
             message: err.message,
-        })
+        });
     }
-}
+};
 
 exports.login = async (req, res) => {
+    const { email, password } = req.body;
+
     try {
-        const { email, password } = req.body;
         if (!email || !password) {
             throw new Error("Please provide email and password");
         }
-        const user = await User.findOne({ email }).select("+password");
-        if (!user || !(await user.correctPassword(password, user.password))) {
-            throw new Error("Incorrect password or email");
+
+        // Get user from DB
+        const result = await pool.query(
+            `SELECT * FROM users WHERE email = $1`,
+            [email]
+        );
+
+        const user = result.rows[0];
+
+        if (!user) {
+            throw new Error("Incorrect email or password");
         }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            throw new Error("Incorrect email or password");
+        }
+
         const token = signToken(user.id);
-        res.status(201).json({
+
+        res.status(200).json({
+            status: "success",
             data: {
                 id: user.id,
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: token,
+                token,
             },
         });
     } catch (err) {
         res.status(400).json({
             status: "failed",
             message: err.message,
-        })
+        });
     }
-}
+};
 
 exports.getUserById = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id)
-        if (!user) {
-            res.status(404).json({
-                status: "failed",
-                message: "invalid id",
-            });
-        } else {
-            res.status(200).json({
-                status: "success",
-                data: {
-                    user,
-                },
-            });
-        }
+        //later
     } catch (err) {
         console.log(err);
     }
@@ -101,35 +114,20 @@ exports.getUserById = async (req, res) => {
 
 exports.resetSave = async (req, res) => {
     try {
-        const userId = req.user.id;
-
-        await Merc.deleteMany({ boss: userId });
-        await Mission.deleteMany({ taker: userId });
-        await User.findByIdAndUpdate(userId, { gold: 2000 });
-
-        res.status(200).json({
-        status: "success",
-        message: "Game reset successfully."
-        });
+        //later
     } catch (err) {
         console.error("Reset error:", err);
-        res.status(500).json({ status: "fail", message: "Failed to reset game." });
+        res.status(500).json({ 
+            status: "fail",
+            message: "Failed to reset save." 
+        });
     }
 };
 
 
 exports.updateUser = async (req, res) => {
     try{
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true,
-        });
-        res.status(200).json({
-            status: "success",
-            data: {
-                user,
-            },
-        });
+        //later
     } catch (err) {
         res.status(404).json({
             status: "failed",
@@ -140,13 +138,7 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
     try {
-        await User.findByIdAndDelete(req.params.id);
-        res.status(200).json({
-            status: "success",
-            data: {
-                user: "deleted",
-            },
-        });
+        //later
     } catch (err) {
         console.log(err);
     }
@@ -155,26 +147,47 @@ exports.deleteUser = async (req, res) => {
 exports.protect = async (req, res, next) => {
     try {
         let token;
-        if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
+
+        // Get token from Authorization header
+        if (
+            req.headers.authorization &&
+            req.headers.authorization.startsWith("Bearer")
+        ) {
             token = req.headers.authorization.split(" ")[1];
         }
-        if (!token){
+
+        if (!token) {
             throw new Error("User not authenticated");
         }
-        const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-        const currentUser = await User.findById(decoded.id);
+
+        // Decode token
+        const decoded = await promisify(jwt.verify)(
+            token,
+            process.env.JWT_SECRET
+        );
+
+        // Find user in DB
+        const result = await pool.query(
+            `SELECT id, username, email, role FROM users WHERE id = $1`,
+            [decoded.id]
+        );
+
+        const currentUser = result.rows[0];
+
         if (!currentUser) {
             throw new Error("User does not exist");
         }
+
+        // Attach user to request
         req.user = currentUser;
         next();
     } catch (err) {
-        res.status(400).json({
+        res.status(401).json({
             status: "failed",
-            error: err.message,
-        })
+            message: err.message,
+        });
     }
-}
+};
 
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
@@ -185,6 +198,6 @@ exports.restrictTo = (...roles) => {
             });
         } else {
             next();
-        }
+        };
     }
-}
+};
