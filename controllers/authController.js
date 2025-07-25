@@ -61,7 +61,6 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     const { email, password } = req.body;
-
     try {
         if (!email || !password) {
             throw new Error("Please provide email and password");
@@ -113,10 +112,12 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.resetSave = async (req, res) => {
-    try {
-        //later
+    const userId = req.user.id;
+    try { 
+        const result = await pool.query(
+            //later
+        );
     } catch (err) {
-        console.error("Reset error:", err);
         res.status(500).json({ 
             status: "fail",
             message: "Failed to reset save." 

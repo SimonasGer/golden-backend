@@ -1,19 +1,25 @@
-const Merc = require("../models/mercModel");
-const User = require("../models/userModel");
+const pool = require("../db");
 const { generateMultipleMercs } = require("../logic/generateMerc");
+
 // ROUTE FUNCTIONS
 exports.getHiredMercs = async (req, res) => {
+    const userId = req.user.id; // comes from JWT
     try {
-        const bossId = req.user.id; // comes from JWT
-        const user = await User.findById(bossId);
-        const mercs = await Merc.find({ boss: bossId });
+        const mercsResult = await pool.query(`SELECT * FROM mercs WHERE boss = $1`,
+            [userId]
+        );
+        const goldResult = await pool.query(`SELECT gold FROM users WHERE id = $1`,
+            [userId]
+        );
 
+        const mercs = mercsResult.rows
+        const gold = goldResult.rows[0].gold
         res.status(200).json({
             status: "success",
             data: {
                 mercs,
-                gold: user.gold,
-            },
+                gold,
+            }
         });
     } catch (err) {
         console.error(err);
@@ -22,19 +28,20 @@ exports.getHiredMercs = async (req, res) => {
 };
 
 exports.createMerc = async (req, res) => {
+    const count = parseInt(req.query.count) || 1;
+    const userId = req.user.id; // comes from JWT
     try {
-        const count = parseInt(req.query.count) || 1;
-        const userId = req.user.id; // comes from JWT
-        const user = await User.findById(userId);
-        const gold = user.gold;
+        const result = await pool.query(`SELECT gold FROM users WHERE id = $1`,
+            [userId]
+        );
         const generatedMercs = generateMultipleMercs(count);
-
+        const gold = result.rows[0].gold;
         res.status(201).json({
-        status: "success",
-        data: {
-            mercs: generatedMercs,
-            gold: gold,
-        },
+            status: "success",
+            data: {
+                mercs: generatedMercs,
+                gold,
+            },
         });
     } catch (err) {
         console.error("Error creating mercs:", err);
@@ -43,37 +50,48 @@ exports.createMerc = async (req, res) => {
 };
 
 exports.hireMerc = async (req, res) => {
-    try {
-        const userId = req.user.id; // 🔒 from JWT
-        const merc = req.body;
-
-        if (!merc) {
+    const userId = req.user.id; // 🔒 from JWT
+    const merc = req.body;
+    if (!merc) {
         return res.status(400).json({ message: "Missing merc data" });
-        }
-
-        const user = await User.findById(req.user.id);
-        const mercPrice = merc.price || 100;
-
-        if (user.gold < mercPrice) {
+    }
+    try {
+        const goldResult = await pool.query(`SELECT gold FROM users WHERE id = $1`,
+            [userId]
+        )
+        let gold = goldResult.rows[0].gold
+        if (gold < merc.price) {
             return res.status(201).json(
                 { message: "Not enough gold to hire this merc" }
             );
         }
 
-        user.gold -= mercPrice;
-        await user.save();
-
-        const savedMerc = await Merc.create({
-        ...merc,
-        boss: userId,
-        status: "hired"
-        });
+        gold -= merc.price;
+        await pool.query(`UPDATE users SET gold = $1 WHERE id = $2`,
+            [gold, userId]
+        )
+        const mercResult = await pool.query(`INSERT INTO mercs
+            (first_name, last_name, description, archetype, strength, agility, intelligence, wage, price, injury_status, boss, created_at)
+            VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'healthy', $10, NOW())
+            RETURNING *`,
+            [
+                merc.firstName,
+                merc.lastName,
+                merc.description,
+                merc.archetype,
+                merc.strength,
+                merc.agility,
+                merc.intelligence,
+                merc.wage,
+                merc.price,
+                userId,
+            ]
+        );
 
         res.status(201).json({
             status: "success",
-            data: {
-                merc: savedMerc
-            }
+            data: mercResult,
         });
     } catch (err) {
         console.error("Error hiring merc:", err);
@@ -82,29 +100,27 @@ exports.hireMerc = async (req, res) => {
 };
 
 exports.healMerc = async (req, res) => {
+    const userId = req.user.id; // from JWT
+    const mercId = parseInt(req.params.id);
     try {
-        const userId = req.user.id; // 🔒 from JWT
-        const user = await User.findById(userId);
-        const mercId = req.params.id;
-        const merc = await Merc.findById(mercId);
-        if (!merc) {
-            return res.status(404).json({ message: "Merc not found" });
+        const result = await pool.query(`SELECT gold FROM users WHERE id = $1`,
+            [userId]
+        );
+        let gold = result.rows[0].gold;
+        if (gold > 100) {
+            await pool.query(`UPDATE mercs SET injury_status = 'healthy' WHERE id = $1`,
+                [mercId]
+            );
+            gold -= 100
+            await pool.query(`UPDATE users SET gold = $1 WHERE id = $2`,
+                [gold, userId]
+            );
+        } else {
+            return res.status(400).json({ message: "Not enough gold." });
         }
-        if (merc.injuryStatus !== "injured") {
-            return res.status(400).json({ message: "Merc is not injured" });
-        }
-        if (user.gold < 100) {
-            return res.status(400).json({ message: "Not enough gold to heal merc" });
-        }
-        merc.injuryStatus = "healthy";
-        user.gold -= 100; // Deduct healing cost
-        await user.save();
-        await merc.save();
         res.status(200).json({
             status: "success",
-            data: {
-                merc
-            }
+            data: merc
         });
     } catch (err) {
         console.error("Error healing merc:", err);
@@ -113,8 +129,11 @@ exports.healMerc = async (req, res) => {
 }
 
 exports.fireMerc = async (req, res) => {
+    const mercId = parseInt(req.params.id);
     try {
-        await Merc.findByIdAndDelete(req.params.id);
+        await pool.query(`DELETE FROM mercs WHERE id = $1`,
+            [mercId]
+        );
         res.status(200).json({
             status: "success",
             data: {

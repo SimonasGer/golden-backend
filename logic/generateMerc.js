@@ -12,12 +12,12 @@ function rollStat([min, max]) {
 
 function randomMargin(base, percentRange = 0.2) {
     const margin = base * percentRange;
-    return Math.round(base + (Math.random() * margin * 2 - margin)); // ±percentRange
+    return Math.round(base + (Math.random() * margin * 2 - margin));
 }
 
 
-function calculatePriceAndWage(stats, priceMultiplier = 25, wageMultiplier = 6) {
-    const totalStats = stats.strength + stats.agility + stats.intelligence;
+function calculatePriceAndWage(strength, agility, intelligence, priceMultiplier = 25, wageMultiplier = 6) {
+    const totalStats = strength + agility + intelligence;
 
     const basePrice = totalStats * priceMultiplier;
     const baseWage = totalStats * wageMultiplier;
@@ -31,19 +31,19 @@ function generateMerc() {
     const archetype = pickRandom(archetypes.archetypes);
     const firstName = pickRandom([...firstNames.male, ...firstNames.female]);
     const lastName = pickRandom(lastNames.lastNames);
-    const stats = {
-        strength: rollStat(archetype.statRanges.strength),
-        agility: rollStat(archetype.statRanges.agility),
-        intelligence: rollStat(archetype.statRanges.intelligence),
-    };
-    const { price, wage } = calculatePriceAndWage(stats);
+    const strength = rollStat(archetype.statRanges.strength);
+    const agility = rollStat(archetype.statRanges.agility);
+    const intelligence=  rollStat(archetype.statRanges.intelligence);
+    const { price, wage } = calculatePriceAndWage(strength, agility, intelligence);
 
     return {
         firstName,
         lastName,
         archetype: archetype.name,
         description: archetype.description,
-        stats,
+        strength,
+        agility,
+        intelligence,
         injuryStatus: "healthy",
         price,
         wage,
