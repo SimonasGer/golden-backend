@@ -7,19 +7,19 @@ const pool = require("../db");
 const signToken = (id) => {
     return jwt.sign({ id: id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN,
-    })
+    });
 }
 
 exports.register = async (req, res) => {
-    const { username, email, role, password, confirmPassword } = req.body;
-
-    if (password !== confirmPassword) {
-        return res.status(400).json({
-            status: "failed",
-            message: "Passwords do not match",
-        });
-    }
     try {
+        const { username, email, role, password, confirmPassword } = req.body;
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                status: "failed",
+                message: "Passwords do not match",
+            });
+        }
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -54,6 +54,8 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     try {
+        const { email, password } = req.body;
+
         if (!email || !password) {
             throw new Error("Please provide email and password");
         }
@@ -71,6 +73,7 @@ exports.login = async (req, res) => {
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
+
         if (!isMatch) {
             throw new Error("Incorrect email or password");
         }
@@ -97,11 +100,10 @@ exports.login = async (req, res) => {
 
 
 exports.resetSave = async (req, res) => {
-    const userId = req.user.id;
-
     try {
-        await pool.query("BEGIN");
+        const userId = req.user.id;
 
+        await pool.query("BEGIN");
         try {
             // Delete mercs
             await pool.query(`DELETE FROM mercs WHERE boss = $1`, [userId]);
@@ -182,6 +184,7 @@ exports.protect = async (req, res, next) => {
     }
 };
 
+// For when roles are implemented. Currently redundant
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {

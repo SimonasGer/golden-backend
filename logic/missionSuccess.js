@@ -1,3 +1,5 @@
+// A bunch of math to calculate mission results. Will be overhauled in later versions.
+
 function mercFate(mercs, status) {
     return mercs.map(merc => {
         const rng = Math.random() * 100;

@@ -1,3 +1,5 @@
+// A bunch of math to randomly generate missions. Will be made modular, readable, and with more data in future versions
+
 const missions = require("../data/missions.json");
 
 function pickRandom(arr) {

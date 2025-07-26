@@ -6,18 +6,18 @@ const authController = require("../controllers/authController");
 router.use(authController.protect)
 router
     .route("/")
-    .get(authController.restrictTo("user", "admin"), missionController.generateMission)
+    .get(authController.restrictTo("user", "admin"), missionController.generateNewMissions)
     .post(authController.restrictTo("user", "admin"), missionController.acceptMission)
 router
     .route("/accepted")
-    .get(authController.restrictTo("user", "admin"), missionController.getAllMissions)
+    .get(authController.restrictTo("user", "admin"), missionController.getAllAcceptedMissions)
 router
     .route("/log")
-    .get(authController.restrictTo("user", "admin"), missionController.getAllMissionsByUser)
+    .get(authController.restrictTo("user", "admin"), missionController.getAllPastMissionsByUser)
 router
     .route("/:id")
     .get(authController.restrictTo("user", "admin"), missionController.getMissionById)
-    .patch(authController.restrictTo("user", "admin"), missionController.updateMissionStatus)
-    .delete(authController.restrictTo("user", "admin"), missionController.deleteMission)
+    .patch(authController.restrictTo("user", "admin"), missionController.startMission)
+    .delete(authController.restrictTo("user", "admin"), missionController.deleteMissionFromLogs)
 
 module.exports = router;

@@ -1,3 +1,5 @@
+// A bunch of math to randomly generate mercenaries. Will be made modular, readable, and with more data in future versions
+
 const archetypes = require("../data/archetypes.json");
 const firstNames = require("../data/firstNames.json");
 const lastNames = require("../data/lastNames.json");

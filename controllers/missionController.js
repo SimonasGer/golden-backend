@@ -2,9 +2,9 @@ const pool = require("../db");
 const { generateMultipleMissions } = require("../logic/generateMission");
 const { missionSuccess } = require("../logic/missionSuccess");
 
-exports.generateMission = async (req, res) => {
-    const count = parseInt(req.query.count) || 1;
+exports.generateNewMissions = async (req, res) => {
     try {
+        const count = parseInt(req.query.count) || 1;
         const missions = generateMultipleMissions(count);
         res.status(201).json({
             status: "success",
@@ -18,7 +18,7 @@ exports.generateMission = async (req, res) => {
 
 exports.acceptMission = async (req, res) => {
     try {
-        const userId = req.user.id; // from JWT
+        const userId = req.user.id; // comes from JWT
         const mission = req.body;
 
         if (!mission) {
@@ -52,9 +52,9 @@ exports.acceptMission = async (req, res) => {
     }
 }
 
-exports.getAllMissions = async (req, res) => {
+exports.getAllAcceptedMissions = async (req, res) => {
     try {
-        const userId = req.user.id; // 🔒 from JWT
+        const userId = req.user.id; // comes from JWT
         const result = await pool.query(`SELECT * FROM missions WHERE taker = $1 AND status = 'pending'`,
             [userId]
         );
@@ -73,7 +73,7 @@ exports.getAllMissions = async (req, res) => {
 exports.getMissionById = async (req, res) => {
     try {
         const missionId = parseInt(req.params.id);
-        const userId = req.user.id; // from JWT
+        const userId = req.user.id; // comes from JWT
 
         const goldResult = await pool.query(`SELECT gold FROM users WHERE id = $1`,
             [userId]
@@ -98,7 +98,7 @@ exports.getMissionById = async (req, res) => {
     }
 };
 
-exports.updateMissionStatus = async (req, res) => {
+exports.startMission = async (req, res) => {
     try {
         const missionId = parseInt(req.params.id);
         const userId = req.user.id;
@@ -125,35 +125,48 @@ exports.updateMissionStatus = async (req, res) => {
 
         const missionResult = missionSuccess(missions[0], mercs);
 
-        await pool.query("BEGIN");
+        const goldResult = await pool.query(`SELECT gold FROM users WHERE id = $1`,
+            [userId]
+        )
+        const gold = goldResult.rows[0].gold;
+        if (missionResult.wage > gold) {
+            return res.status(403).json(
+                { message: "Not enough gold to fund this mission." }
+            );
+        }
+
+        const client = await pool.connect();
+        await client.query("BEGIN");
         try {
-            await pool.query(
+            await client.query(
                 `UPDATE users SET gold = gold - $1 + $2 WHERE id = $3`,
                 [missionResult.wage, missionResult.reward, userId]
             );
 
             for (const merc of missionResult.mercs) {
-                await pool.query(
+                await client.query(
                     `UPDATE mercs SET injury_status = $1 WHERE id = $2 AND boss = $3`,
                     [merc.injury_status, merc.id, userId]
                 );
             }
 
-            await pool.query(
+            await client.query(
                 `UPDATE missions SET status = $1 WHERE id = $2 AND taker = $3`,
                 [missionResult.status, missionId, userId]
             );
 
-            await pool.query("COMMIT");
+            await client.query("COMMIT");
         } catch (err) {
-            await pool.query("ROLLBACK");
+            await client.query("ROLLBACK");
             throw err;
+        } finally {
+            client.release();
         }
 
         res.status(200).json({
             status: "success",
             data: {
-                result: "Successfuly started mission",
+                result: "Successfully started mission",
             }
         });
     } catch (err) {
@@ -162,7 +175,7 @@ exports.updateMissionStatus = async (req, res) => {
     }
 };
 
-exports.getAllMissionsByUser = async (req, res) => {
+exports.getAllPastMissionsByUser = async (req, res) => {
     try {
         const userId = req.user.id; // from JWT
         const result = await pool.query(`SELECT * FROM missions WHERE status IN ('completed', 'failed') AND taker = $1 ORDER BY created_at DESC`,
@@ -179,7 +192,7 @@ exports.getAllMissionsByUser = async (req, res) => {
     }
 };
 
-exports.deleteMission = async (req, res) => {
+exports.deleteMissionFromLogs = async (req, res) => {
     try {
         const userId = req.user.id
         const missionId = parseInt(req.params.id);
