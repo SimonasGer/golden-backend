@@ -4,20 +4,19 @@ function mercFate(mercs, status) {
 
         if (status === "success") {
             if (rng < 1) {
-                merc.status = "dead";
+                merc.injury_status = "dead";
             } else if (rng < 10) {
-                merc.status = "injured";
+                merc.injury_status = "injured";
             } else {
-                merc.status = "healthy";
+                merc.injury_status = "healthy";
             }
         } else if (status === "failed") {
             if (rng < 50) {
-                merc.status = "dead";
+                merc.injury_status = "dead";
             } else {
-                merc.status = "injured";
+                merc.injury_status = "injured";
             }
         }
-
         return merc;
     });
 }
@@ -33,23 +32,25 @@ function missionSuccess(mission, mercs) {
 
     // Sum merc stats
     mercs.forEach(merc => {
-        givenStats.strength += merc.stats.strength;
-        givenStats.agility += merc.stats.agility;
-        givenStats.intelligence += merc.stats.intelligence;
+        givenStats.strength += merc.strength;
+        givenStats.agility += merc.agility;
+        givenStats.intelligence += merc.intelligence;
         wage += merc.wage;
     });
 
-    const requiredStats = mission.stats;
+    const requiredStrength = mission.strength;
+    const requiredAgility = mission.agility;
+    const requiredIntelligence = mission.intelligence;
 
     // Clamp to not overcontribute beyond required
     const cappedStats = {
-        strength: Math.min(givenStats.strength, requiredStats.strength),
-        agility: Math.min(givenStats.agility, requiredStats.agility),
-        intelligence: Math.min(givenStats.intelligence, requiredStats.intelligence),
+        strength: Math.min(givenStats.strength, requiredStrength),
+        agility: Math.min(givenStats.agility, requiredAgility),
+        intelligence: Math.min(givenStats.intelligence, requiredIntelligence),
     };
 
     const totalGiven = cappedStats.strength + cappedStats.agility + cappedStats.intelligence;
-    const totalRequired = requiredStats.strength + requiredStats.agility + requiredStats.intelligence;
+    const totalRequired = requiredStrength + requiredAgility + requiredIntelligence;
 
     let successChance = Math.round((totalGiven / totalRequired) * 100);
     successChance = Math.max(0, Math.min(successChance, 100)); // Clamp 0–100

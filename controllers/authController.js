@@ -10,14 +10,6 @@ const signToken = (id) => {
     })
 }
 
-exports.getAllUsers = async (req, res) => {
-    try {
-        //later
-    } catch (err) {
-        console.log(err);
-    }
-};
-
 exports.register = async (req, res) => {
     const { username, email, role, password, confirmPassword } = req.body;
 
@@ -103,47 +95,47 @@ exports.login = async (req, res) => {
     }
 };
 
-exports.getUserById = async (req, res) => {
-    try {
-        //later
-    } catch (err) {
-        console.log(err);
-    }
-};
 
 exports.resetSave = async (req, res) => {
     const userId = req.user.id;
-    try { 
-        const result = await pool.query(
-            //later
-        );
-    } catch (err) {
-        res.status(500).json({ 
-            status: "fail",
-            message: "Failed to reset save." 
-        });
-    }
-};
 
-
-exports.updateUser = async (req, res) => {
-    try{
-        //later
-    } catch (err) {
-        res.status(404).json({
-            status: "failed",
-            message: err.message,
-        });
-    }
-};
-
-exports.deleteUser = async (req, res) => {
     try {
-        //later
+        await pool.query("BEGIN");
+
+        try {
+            // Delete mercs
+            await pool.query(`DELETE FROM mercs WHERE boss = $1`, [userId]);
+
+            // Delete missions
+            await pool.query(`DELETE FROM missions WHERE taker = $1`, [userId]);
+
+            // Reset gold
+            await pool.query(`UPDATE users SET gold = 2000 WHERE id = $1`, [userId]);
+
+            await pool.query("COMMIT");
+
+            res.status(200).json({
+                status: "success",
+                message: "Save reset successfully.",
+            });
+        } catch (error) {
+            await pool.query("ROLLBACK");
+            console.error("Error during resetSave transaction:", error);
+            res.status(500).json({
+                status: "fail",
+                message: "Failed to reset save due to internal error.",
+            });
+        }
+
     } catch (err) {
-        console.log(err);
+        console.error("Error initiating resetSave transaction:", err);
+        res.status(500).json({
+            status: "fail",
+            message: "Failed to reset save.",
+        });
     }
 };
+
 
 exports.protect = async (req, res, next) => {
     try {

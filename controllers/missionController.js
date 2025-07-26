@@ -1,19 +1,14 @@
-const Mission = require("../models/missionModel");
-const User = require("../models/userModel");
-const Merc = require("../models/mercModel");
+const pool = require("../db");
 const { generateMultipleMissions } = require("../logic/generateMission");
 const { missionSuccess } = require("../logic/missionSuccess");
 
 exports.generateMission = async (req, res) => {
+    const count = parseInt(req.query.count) || 1;
     try {
-        const count = parseInt(req.query.count) || 1;
-        const generatedMissions = generateMultipleMissions(count);
-
+        const missions = generateMultipleMissions(count);
         res.status(201).json({
             status: "success",
-            data: {
-                missions: generatedMissions
-            },
+            data: missions,
         });
     } catch (err) {
         console.error("Error creating missions:", err);
@@ -23,24 +18,33 @@ exports.generateMission = async (req, res) => {
 
 exports.acceptMission = async (req, res) => {
     try {
-        const userId = req.user.id; // 🔒 from JWT
+        const userId = req.user.id; // from JWT
         const mission = req.body;
 
         if (!mission) {
-        return res.status(400).json({ message: "Missing mission data" });
+            return res.status(400).json({ message: "Missing mission data" });
         }
 
-        const savedMission = await Mission.create({
-        ...mission,
-        taker: userId,
-        status: "pending"
-        });
+        const result = await pool.query(`INSERT INTO missions
+            (name, description, strength, agility, intelligence, reward, status, taker, created_at)
+            VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+            RETURNING *`,
+            [
+                mission.name,
+                mission.description,
+                mission.strength,
+                mission.agility,
+                mission.intelligence,
+                mission.reward,
+                'pending',
+                userId,
+            ]
+        );
 
         res.status(201).json({
             status: "success",
-            data: {
-                mission: savedMission
-            }
+            data: result
         });
     } catch (err) {
         console.error("Error accepting mission:", err);
@@ -51,13 +55,14 @@ exports.acceptMission = async (req, res) => {
 exports.getAllMissions = async (req, res) => {
     try {
         const userId = req.user.id; // 🔒 from JWT
-        const missions = await Mission.find({ taker: userId, status: "pending" });
+        const result = await pool.query(`SELECT * FROM missions WHERE taker = $1 AND status = 'pending'`,
+            [userId]
+        );
 
+        const missions = result.rows
         res.status(200).json({
             status: "success",
-            data: {
-                missions
-            }
+            data: missions,
         });
     } catch (err) {
         console.error("Error getting missions:", err);
@@ -67,19 +72,24 @@ exports.getAllMissions = async (req, res) => {
 
 exports.getMissionById = async (req, res) => {
     try {
-        const missionId = req.params.id;
-        const userId = req.user.id; // 🔒 from JWT
-        const user = await User.findById(userId);
-        const mission = await Mission.findById(missionId);
+        const missionId = parseInt(req.params.id);
+        const userId = req.user.id; // from JWT
 
-        if (!mission || mission.status !== "pending" || mission.taker.toString() !== userId) {
-            return res.status(404).json({ message: "Mission not found" });
-        }
+        const goldResult = await pool.query(`SELECT gold FROM users WHERE id = $1`,
+            [userId]
+        );
+        const gold = goldResult.rows[0].gold;
+
+        const missionResult = await pool.query(`SELECT * FROM missions WHERE id = $1`,
+            [missionId]
+        );
+        const mission = missionResult.rows[0];
+
         res.status(200).json({
             status: "success",
             data: {
                 mission,
-                gold: user.gold
+                gold,
             }
         });
     } catch (err) {
@@ -90,54 +100,60 @@ exports.getMissionById = async (req, res) => {
 
 exports.updateMissionStatus = async (req, res) => {
     try {
-        const missionId = req.params.id;
+        const missionId = parseInt(req.params.id);
         const userId = req.user.id;
         const mercIds = req.body.mercIds || [];
 
-        // Fetch all mercs in parallel
-        const mercs = await Promise.all(
-            mercIds.map(id => Merc.findById(id))
+        if (!Array.isArray(mercIds) || mercIds.length === 0) {
+            return res.status(400).json({ message: "No mercenaries provided" });
+        }
+
+        const { rows: mercs } = await pool.query(
+            `SELECT * FROM mercs WHERE id = ANY($1::int[]) AND boss = $2`,
+            [mercIds, userId]
         );
-
-        // Filter out any nulls (not found mercs)
-        const validMercs = mercs.filter(Boolean);
-        if (validMercs.length === 0) {
-            return res.status(400).json({ message: "No valid mercs provided" });
+        if (mercs.length !== mercIds.length) {
+            return res.status(400).json({ message: "Invalid mercenary selection" });
         }
 
-        const mission = await Mission.findById(missionId);
-        if (!mission) {
-            return res.status(404).json({ message: "Mission not found" });
-        }
-        if (mission.status !== "pending") {
-            return res.status(400).json({ message: "Mission is not in a pending state" });
-        }
-
-        const result = missionSuccess(mission, validMercs);
-
-        // Update mission status and reward
-        mission.status = result.status;
-        mission.mercs = mercIds
-        mission.reward = result.reward;
-        await mission.save();
-
-        // Give player gold if successful
-        if (result.status === "completed") {
-            const user = await User.findById(userId);
-            user.gold = user.gold + result.reward - result.wage;
-            await user.save();
+        const {rows: missions} = await pool.query(`SELECT * FROM missions WHERE id = $1`,
+            [missionId]
+        );
+        if (missions.length === 0) {
+            return res.status(400).json({ message: "Invalid mission" });
         }
 
-        // Update merc statuses
-        for (let merc of result.mercs) {
-            await Merc.findByIdAndUpdate(merc._id, { injuryStatus: merc.status });
+        const missionResult = missionSuccess(missions[0], mercs);
+
+        await pool.query("BEGIN");
+        try {
+            await pool.query(
+                `UPDATE users SET gold = gold - $1 + $2 WHERE id = $3`,
+                [missionResult.wage, missionResult.reward, userId]
+            );
+
+            for (const merc of missionResult.mercs) {
+                await pool.query(
+                    `UPDATE mercs SET injury_status = $1 WHERE id = $2 AND boss = $3`,
+                    [merc.injury_status, merc.id, userId]
+                );
+            }
+
+            await pool.query(
+                `UPDATE missions SET status = $1 WHERE id = $2 AND taker = $3`,
+                [missionResult.status, missionId, userId]
+            );
+
+            await pool.query("COMMIT");
+        } catch (err) {
+            await pool.query("ROLLBACK");
+            throw err;
         }
 
         res.status(200).json({
             status: "success",
             data: {
-                mission,
-                result
+                result: "Successfuly started mission",
             }
         });
     } catch (err) {
@@ -148,13 +164,14 @@ exports.updateMissionStatus = async (req, res) => {
 
 exports.getAllMissionsByUser = async (req, res) => {
     try {
-        const userId = req.user.id; // 🔒 from JWT
-        const missions = await Mission.find({ taker: userId, status: "completed" || "failed" }).populate({ path: 'mercs', options: { retainNullValues: true } }).sort({ createdAt: -1 });
+        const userId = req.user.id; // from JWT
+        const result = await pool.query(`SELECT * FROM missions WHERE status IN ('completed', 'failed') AND taker = $1 ORDER BY created_at DESC`,
+            [userId]
+        );
+        const missions = result.rows;
         res.status(200).json({
             status: "success",
-            data: {
-                missions
-            }
+            data: missions
         });
     } catch (err) {
         console.error("Error getting all missions by user:", err);
@@ -164,14 +181,13 @@ exports.getAllMissionsByUser = async (req, res) => {
 
 exports.deleteMission = async (req, res) => {
     try {
-        const missionId = req.params.id;
-        const mission = await Mission.findByIdAndDelete(missionId);
-        if (!mission) {
-            return res.status(404).json({ message: "Mission not found" });
-        }
-        res.status(204).json({
+        const userId = req.user.id
+        const missionId = parseInt(req.params.id);
+        await pool.query(`DELETE FROM missions WHERE id = $1 AND taker = $2`,
+            [missionId, userId]
+        );
+        res.status(200).json({
             status: "success",
-            data: null
         });
     } catch (err) {
         console.error("Error deleting mission:", err);

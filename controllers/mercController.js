@@ -50,7 +50,7 @@ exports.createMerc = async (req, res) => {
 };
 
 exports.hireMerc = async (req, res) => {
-    const userId = req.user.id; // 🔒 from JWT
+    const userId = req.user.id; // from JWT
     const merc = req.body;
     if (!merc) {
         return res.status(400).json({ message: "Missing merc data" });

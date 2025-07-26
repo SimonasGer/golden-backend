@@ -7,17 +7,6 @@ router.post("/login", authController.login);
 
 router
     .use(authController.protect)
-    .route("/")
-    .get(authController.restrictTo("user", "admin"), authController.getAllUsers)
-
-router
-    .use(authController.protect)
-    .route("/:id")
-    .get(authController.restrictTo("user", "admin"), authController.getUserById)
-    .patch(authController.restrictTo("user", "admin"), authController.updateUser)
-    .delete(authController.restrictTo("admin"), authController.deleteUser)
-router
-    .use(authController.protect)
     .route("/reset")
     .post(authController.restrictTo("user", "admin"), authController.resetSave);
     

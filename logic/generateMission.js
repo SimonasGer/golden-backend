@@ -14,8 +14,8 @@ function randomMargin(base, percentRange = 0.2) {
 }
 
 
-function calculateReward(stats, rewardMultiplier = 25) {
-    const totalStats = stats.strength + stats.agility + stats.intelligence;
+function calculateReward(strength, agility, intelligence, rewardMultiplier = 25) {
+    const totalStats = strength + agility + intelligence;
 
     const baseReward = totalStats * rewardMultiplier;
 
@@ -25,17 +25,16 @@ function calculateReward(stats, rewardMultiplier = 25) {
 }
 function generateMission() {
     const mission = pickRandom(missions);
-    const stats = {
-        strength: rollStat(mission.requirements.strength),
-        agility: rollStat(mission.requirements.agility),
-        intelligence: rollStat(mission.requirements.intelligence),
-    };
-    const { reward } = calculateReward(stats);
-
+    const strength = rollStat(mission.requirements.strength);
+    const agility = rollStat(mission.requirements.agility);
+    const intelligence = rollStat(mission.requirements.intelligence);
+    const { reward } = calculateReward(strength, agility, intelligence);
     return {
         name: mission.name,
         description: mission.description,
-        stats,
+        strength,
+        agility,
+        intelligence,
         status: "inactive",
         reward,
     }
